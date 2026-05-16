@@ -4,10 +4,7 @@ const SECRET = import.meta.env.VITE_APP_SECRET || ''
 async function req(path, method = 'GET', body) {
   const opts = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SECRET}`,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SECRET}` },
   }
   if (body !== undefined) opts.body = JSON.stringify(body)
   const res = await fetch(BASE + path, opts)
@@ -33,6 +30,7 @@ export const api = {
   getTags: () => req('/api/tags'),
   saveTags: (tags) => req('/api/tags', 'PUT', tags),
 
-  uploadPhoto: (storeId, base64, filename) =>
-    req('/api/photos', 'POST', { storeId, base64, filename }),
+  uploadPhoto: (storeId, base64, filename) => req('/api/photos', 'POST', { storeId, base64, filename }),
+
+  expandUrl: (url) => req('/api/expand-url', 'POST', { url }),
 }
