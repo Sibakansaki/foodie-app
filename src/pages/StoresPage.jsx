@@ -23,11 +23,16 @@ export default function StoresPage() {
   const { tags } = useTags()
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState(null)
+  const [sort, setSort] = useState('none')
 
   const filtered = stores.filter(s => {
     const matchSearch = !search || s.name.includes(search) || (s.address || '').includes(search)
     const matchTag = !activeTag || (s.tags || []).includes(activeTag)
     return matchSearch && matchTag
+  }).sort((a, b) => {
+    if (sort === 'desc') return (b.avgRating ?? -1) - (a.avgRating ?? -1)
+    if (sort === 'asc') return (a.avgRating ?? -1) - (b.avgRating ?? -1)
+    return 0
   })
 
   return (
@@ -48,11 +53,12 @@ export default function StoresPage() {
             }}
           >＋ 新增店家</button>
         </div>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="搜尋店家名稱或地址..."
-          style={{ marginBottom: 10 }}
-        />
+        <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜尋店家名稱或地址..." style={{ flex:1 }}/>
+          <button onClick={() => setSort(s => s === 'desc' ? 'asc' : s === 'asc' ? 'none' : 'desc')} style={{ flexShrink:0, padding:'0 12px', borderRadius:8, border:'0.5px solid rgba(0,0,0,0.15)', background:'#fff', cursor:'pointer', fontSize:13, color:'#5a5a56', whiteSpace:'nowrap' }}>
+            {sort === 'desc' ? '⭐ 高→低' : sort === 'asc' ? '⭐ 低→高' : '排序'}
+          </button>
+        </div>
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
           <TagChip label="全部" active={!activeTag} onClick={() => setActiveTag(null)} />
           {tags.map(t => (
