@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStores, useTags } from '../hooks/useData.js'
-import { Btn, Field, PageHeader, Divider, Toggle } from '../components/ui.jsx'
+import { Btn, Field, Divider, Toggle } from '../components/ui.jsx'
 import { genId, fileToBase64 } from '../utils/helpers.js'
 import { api } from '../utils/api.js'
 
@@ -11,6 +11,25 @@ const PRICES = [
   { value: 'high', label: '$$$', sub: '300–600' },
   { value: 'vhigh', label: '$$$$', sub: '600以上' },
 ]
+
+async function fetchAddressFromMaps(mapsUrl) {
+  if (!mapsUrl) return ''
+  try {
+    const placeMatch = mapsUrl.match(/place\/([^/]+)/)
+    if (placeMatch) {
+      const decoded = decodeURIComponent(placeMatch[1]).replace(/\+/g, ' ')
+      if (decoded && !/^[\d.,@]+$/.test(decoded)) return decoded
+    }
+    const queryMatch = mapsUrl.match(/[?&]q=([^&]+)/)
+    if (queryMatch) {
+      const decoded = decodeURIComponent(queryMatch[1]).replace(/\+/g, ' ')
+      if (decoded) return decoded
+    }
+    return ''
+  } catch {
+    return ''
+  }
+}
 
 export default function StoreFormPage({ editStore }) {
   const navigate = useNavigate()
@@ -29,11 +48,24 @@ export default function StoreFormPage({ editStore }) {
   const [photoPreview, setPhotoPreview] = useState(editStore?.photoUrl || null)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
+  const [fetchingAddr, setFetchingAddr] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const toggleTag = (id) => {
     set('tags', form.tags.includes(id) ? form.tags.filter(t => t !== id) : [...form.tags, id])
+  }
+
+  const handleMapsUrl = async (url) => {
+    set('mapsUrl', url)
+    if (!url.trim()) return
+    setFetchingAddr(true)
+    try {
+      const addr = await fetchAddressFromMaps(url)
+      if (addr) set('address', addr)
+    } finally {
+      setFetchingAddr(false)
+    }
   }
 
   const handlePhoto = async (e) => {
@@ -69,21 +101,43 @@ export default function StoreFormPage({ editStore }) {
 
   return (
     <div>
-      <PageHeader title={editStore ? '編輯店家' : '新增店家'} onBack={() => navigate(-1)} />
-      <div style={{ padding: 16 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 16px', background: '#fff',
+        borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <button onClick={() => navigate(-1)} style={{
+          background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
+          color: '#5a5a56', padding: '0 4px', lineHeight: 1,
+        }}>←</button>
+        <h1 style={{ flex: 1, fontSize: 17, fontWeight: 500 }}>
+          {editStore ? '編輯店家' : '新增店家'}
+        </h1>
+      </div>
 
+      <div style={{ padding: 16 }}>
         <Field label="店家名稱 *">
           <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="例：阿嬤的麵攤" />
         </Field>
 
-        <Field label="地址">
-          <input value={form.address} onChange={e => set('address', e.target.value)} placeholder="台中市..." />
+        <Field label="Google Maps 連結" hint="貼上連結後會自動帶入地址">
+          <input
+            value={form.mapsUrl}
+            onChange={e => handleMapsUrl(e.target.value)}
+            type="url"
+            placeholder="https://maps.google.com/..."
+          />
+          {fetchingAddr && (
+            <div style={{ fontSize: 12, color: '#9a9a94', marginTop: 4 }}>正在讀取地址...</div>
+          )}
         </Field>
 
-        <Field label="Google Maps 連結">
-          <input value={form.mapsUrl} onChange={e => set('mapsUrl', e.target.value)}
-            type="url" placeholder="https://maps.google.com/..." />
-        </Field>
+        {form.address ? (
+          <Field label="地址（自動帶入，可手動修改）">
+            <input value={form.address} onChange={e => set('address', e.target.value)} />
+          </Field>
+        ) : null}
 
         <Field label="價位範圍">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>

@@ -16,7 +16,7 @@ const CORS = {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...CORS },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS },
   })
 }
 
@@ -41,12 +41,17 @@ async function ghGet(env, path) {
 async function ghReadJson(env, path) {
   const file = await ghGet(env, path)
   if (!file) return null
-  const content = atob(file.content.replace(/\n/g, ''))
+  const binary = atob(file.content.replace(/\n/g, ''))
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0))
+  const content = new TextDecoder('utf-8').decode(bytes)
   return { data: JSON.parse(content), sha: file.sha }
 }
 
 async function ghWriteJson(env, path, data, sha) {
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))))
+  const jsonStr = JSON.stringify(data, null, 2)
+  const bytes = new TextEncoder().encode(jsonStr)
+  const binary = Array.from(bytes).map(b => String.fromCharCode(b)).join('')
+  const content = btoa(binary)
   const body = { message: `update ${path}`, content }
   if (sha) body.sha = sha
 
@@ -193,7 +198,6 @@ export default {
           const rating = { ...body, storeId }
           data.push(rating)
           await ghWriteJson(env, filePath, data, sha)
-          // 更新 store 的 avgRating 快取
           await updateStoreAvg(env, storeId, data)
           return json(rating)
         }
@@ -242,7 +246,7 @@ export default {
   }
 }
 
-// 更新 store 的 avgRating 欄位（方便列表頁顯示）
+// 更新 store 的 avgRating 欄位
 async function updateStoreAvg(env, storeId, ratings) {
   try {
     const scored = ratings.filter(r => r.overallStars > 0)
