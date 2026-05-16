@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../hooks/useData.js'
-import { Btn, Field, PageHeader, Toggle, Divider } from '../components/ui.jsx'
+import { Btn, Field, Toggle, Divider, StarRating, SpicyPicker } from '../components/ui.jsx'
 import { genId } from '../utils/helpers.js'
 
 export default function DishFormPage() {
@@ -12,15 +12,12 @@ export default function DishFormPage() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
 
-  // 單品
-  const [single, setSingle] = useState({ name: '', price: '', spicy: false, note: '' })
-
-  // 套餐
+  const [single, setSingle] = useState({ name: '', price: '', spicy: false, note: '', stars: 0, spicyLevel: null })
   const [setName, setSetName] = useState('')
   const [setPrice, setSetPrice] = useState('')
-  const [items, setItems] = useState([{ id: genId(), name: '', spicy: false }])
+  const [items, setItems] = useState([{ id: genId(), name: '', spicy: false, stars: 0, spicyLevel: null }])
 
-  const addItem = () => setItems(it => [...it, { id: genId(), name: '', spicy: false }])
+  const addItem = () => setItems(it => [...it, { id: genId(), name: '', spicy: false, stars: 0, spicyLevel: null }])
   const removeItem = (id) => setItems(it => it.filter(i => i.id !== id))
   const updateItem = (id, k, v) => setItems(it => it.map(i => i.id === id ? { ...i, [k]: v } : i))
 
@@ -30,7 +27,15 @@ export default function DishFormPage() {
       if (!single.name.trim()) { setErr('請填寫餐點名稱'); return }
       setSaving(true)
       try {
-        await createDish({ type: 'single', ...single, price: single.price ? Number(single.price) : null })
+        await createDish({
+          type: 'single',
+          name: single.name,
+          price: single.price ? Number(single.price) : null,
+          spicy: single.spicy,
+          note: single.note,
+          stars: single.stars || null,
+          spicyLevel: single.spicyLevel || null,
+        })
         navigate(-1)
       } catch (e) { setErr(e.message) }
       finally { setSaving(false) }
@@ -50,9 +55,20 @@ export default function DishFormPage() {
 
   return (
     <div>
-      <PageHeader title="新增餐點" onBack={() => navigate(-1)} />
-      <div style={{ padding: 16 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '14px 16px', background: '#fff',
+        borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <button onClick={() => navigate(-1)} style={{
+          background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
+          color: '#5a5a56', padding: '0 4px', lineHeight: 1,
+        }}>←</button>
+        <h1 style={{ flex: 1, fontSize: 17, fontWeight: 500 }}>新增餐點</h1>
+      </div>
 
+      <div style={{ padding: 16 }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
           {[['single', '🍜 單品'], ['set', '🍱 套餐群組']].map(([v, l]) => (
             <button key={v} onClick={() => setType(v)} style={{
@@ -75,15 +91,37 @@ export default function DishFormPage() {
             </Field>
             <Field label="">
               <Toggle checked={single.spicy} onChange={v => setSingle(s => ({ ...s, spicy: v }))} label="🌶 此餐點可選辣度" />
-              {single.spicy && (
-                <div style={{ marginTop: 8, padding: '8px 12px', background: '#FCEBEB', borderRadius: 8, fontSize: 12, color: '#791F1F' }}>
-                  評分時將出現：小辣 / 中辣 / 大辣 選擇
-                </div>
-              )}
             </Field>
             <Field label="備註">
               <textarea value={single.note} onChange={e => setSingle(s => ({ ...s, note: e.target.value }))} placeholder="口味特色..." />
             </Field>
+
+            <Divider />
+            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12, color: '#5a5a56' }}>這次的評分（選填）</div>
+
+            <div style={{ background: '#f5f4f0', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: single.spicy ? 10 : 0 }}>
+                <span style={{ fontSize: 14 }}>{single.name || '此餐點'}</span>
+                <StarRating value={single.stars} onChange={v => setSingle(s => ({ ...s, stars: v }))} size={26} />
+              </div>
+              {single.spicy && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <span style={{ fontSize: 12, color: '#791F1F' }}>🌶 辣度</span>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {['小辣', '中辣', '大辣'].map(lv => (
+                      <button key={lv} onClick={() => setSingle(s => ({ ...s, spicyLevel: s.spicyLevel === lv ? null : lv }))}
+                        style={{
+                          padding: '3px 10px', borderRadius: 12, fontSize: 12, border: '0.5px solid #F09595',
+                          cursor: 'pointer', transition: 'all .15s',
+                          background: single.spicyLevel === lv ? '#E24B4A' : '#fff',
+                          color: single.spicyLevel === lv ? '#fff' : '#A32D2D',
+                          fontWeight: single.spicyLevel === lv ? 500 : 400,
+                        }}>{lv}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <>
@@ -106,7 +144,7 @@ export default function DishFormPage() {
                   <input
                     value={item.name}
                     onChange={e => updateItem(item.id, 'name', e.target.value)}
-                    placeholder={`項目 ${idx + 1}，例：草莓球`}
+                    placeholder={`項目 ${idx + 1}`}
                     style={{ flex: 1 }}
                   />
                   {items.length > 1 && (
@@ -116,11 +154,27 @@ export default function DishFormPage() {
                     }}>×</button>
                   )}
                 </div>
-                <Toggle
-                  checked={item.spicy}
-                  onChange={v => updateItem(item.id, 'spicy', v)}
-                  label="🌶 此項目可選辣度"
-                />
+                <div style={{ marginBottom: 8 }}>
+                  <Toggle checked={item.spicy} onChange={v => updateItem(item.id, 'spicy', v)} label="🌶 可選辣度" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: '#5a5a56' }}>評分</span>
+                  <StarRating value={item.stars} onChange={v => updateItem(item.id, 'stars', v)} size={22} />
+                </div>
+                {item.spicy && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <span style={{ fontSize: 12, color: '#791F1F' }}>🌶</span>
+                    {['小辣', '中辣', '大辣'].map(lv => (
+                      <button key={lv} onClick={() => updateItem(item.id, 'spicyLevel', item.spicyLevel === lv ? null : lv)}
+                        style={{
+                          padding: '2px 8px', borderRadius: 10, fontSize: 11, border: '0.5px solid #F09595',
+                          cursor: 'pointer',
+                          background: item.spicyLevel === lv ? '#E24B4A' : '#fff',
+                          color: item.spicyLevel === lv ? '#fff' : '#A32D2D',
+                        }}>{lv}</button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
 
