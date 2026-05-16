@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStores } from '../hooks/useData.js'
-import { useTags } from '../hooks/useData.js'
+import { useStores, useTags } from '../hooks/useData.js'
 import { Card, EmptyState, PriceTag } from '../components/ui.jsx'
 import { avgRating } from '../utils/helpers.js'
 
@@ -107,15 +106,12 @@ function StoreCard({ store, onClick }) {
     <Card style={{ cursor: 'pointer' }} onClick={onClick}>
       <div style={{
         height: 100, background: '#f5f4f0', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', fontSize: 44, position: 'relative',
+        justifyContent: 'center', fontSize: 44, position: 'relative', overflow: 'hidden',
       }}>
         {store.photoUrl
           ? <img src={store.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : '🍽️'
         }
-        {store.tags?.[0] && (() => {
-          return null // tags shown in body
-        })()}
       </div>
       <div style={{ padding: '10px 12px' }}>
         <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{store.name}</div>
