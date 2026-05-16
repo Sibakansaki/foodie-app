@@ -11,6 +11,7 @@ export default function StoreDetailPage() {
   const { deleteStore } = useStores()
   const [editingDish, setEditingDish] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [sort, setSort] = useState('none')
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#9a9a94' }}>載入中...</div>
   if (!store) return <div style={{ padding: 40, textAlign: 'center' }}>找不到店家</div>
@@ -22,8 +23,13 @@ export default function StoreDetailPage() {
   }
   const handleUpdateDish = async (dish) => { await updateDish(dish.id, dish); setEditingDish(null) }
 
-  const singles = dishes.filter(d => d.type === 'single')
-  const sets = dishes.filter(d => d.type === 'set')
+  const sortFn = (a, b) => {
+    if (sort === 'desc') return (b.stars ?? -1) - (a.stars ?? -1)
+    if (sort === 'asc') return (a.stars ?? -1) - (b.stars ?? -1)
+    return 0
+  }
+  const singles = dishes.filter(d => d.type === 'single').sort(sortFn)
+  const sets = dishes.filter(d => d.type === 'set').sort(sortFn)
 
   return (
     <div>
@@ -66,6 +72,9 @@ export default function StoreDetailPage() {
       <div style={{ padding:16 }}>
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14 }}>
           <span style={{ fontSize:15,fontWeight:500 }}>餐點</span>
+          <button onClick={() => setSort(s => s==='desc'?'asc':s==='asc'?'none':'desc')} style={{ padding:'5px 10px',borderRadius:8,border:'0.5px solid rgba(0,0,0,0.15)',background:'#fff',cursor:'pointer',fontSize:12,color:'#5a5a56' }}>
+            {sort==='desc'?'⭐ 高→低':sort==='asc'?'⭐ 低→高':'排序'}
+          </button>
           <button onClick={() => navigate(`/stores/${id}/dishes/new`)} style={{ background:'#D85A30',border:'none',borderRadius:8,color:'#fff',fontSize:12,fontWeight:500,padding:'6px 12px',cursor:'pointer' }}>＋ 新增餐點</button>
         </div>
 
