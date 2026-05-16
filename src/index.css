@@ -1,0 +1,64 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --coral-dark: #993C1D;
+  --coral-text: #712B13;
+  --amber: #EF9F27;
+  --amber-light: #FAEEDA;
+  --amber-text: #633806;
+  --red-light: #FCEBEB;
+  --red-text: #A32D2D;
+  --teal: #1D9E75;
+  --teal-light: #E1F5EE;
+  --teal-text: #085041;
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --border-mid: rgba(0,0,0,0.18);
+  --text: #1a1a18;
+  --text-2: #5a5a56;
+  --text-3: #9a9a94;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --radius-lg: 14px;
+}
+
+body {
+  font-family: -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+input, textarea, select {
+  width: 100%;
+  border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--coral);
+}
+textarea { resize: vertical; min-height: 72px; }
+
+button { cursor: pointer; }
+
+a { color: inherit; text-decoration: none; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
