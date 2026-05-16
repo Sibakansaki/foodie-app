@@ -91,9 +91,9 @@ export default function StoreFormPage() {
       </div>
       <div style={{ padding:16 }}>
         <Field label="店家名稱 *"><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="例：阿嬤的麵攤"/></Field>
-        <Field label="Google Maps 連結" hint="貼上連結後會自動帶入地址（支援短網址）">
+        <Field label="Google Maps 連結" hint="貼上 Google Maps 連結">
           <input value={form.mapsUrl} onChange={e=>handleMapsUrl(e.target.value)} type="url" placeholder="https://maps.app.goo.gl/..."/>
-          {fetchingAddr && <div style={{fontSize:12,color:'#9a9a94',marginTop:4}}>正在讀取地址...</div>}
+          {fetchingAddr && <div style={{fontSize:12,color:'#9a9a94',marginTop:4}}></div>}
         </Field>
         <Field label="地址（可手動修改）"><input value={form.address} onChange={e=>set('address',e.target.value)} placeholder="自動帶入或手動填寫"/></Field>
         <Field label="價位範圍">
