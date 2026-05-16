@@ -37,12 +37,12 @@ export function Field({ label, children, hint }) {
   )
 }
 
-export function Card({ children, style }) {
+export function Card({ children, style, onClick }) {
   return (
     <div style={{
       background: '#fff', border: '0.5px solid rgba(0,0,0,0.1)',
       borderRadius: 14, overflow: 'hidden', ...style
-    }}>
+    }} onClick={onClick}>
       {children}
     </div>
   )
