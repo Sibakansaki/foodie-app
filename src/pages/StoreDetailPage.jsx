@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore, useStores } from '../hooks/useData.js'
+import { useTags } from '../hooks/useData.js'
 import { PriceTag, SpicyBadge, EmptyState, StarRating } from '../components/ui.jsx'
 import { SPICY_LEVELS } from '../utils/helpers.js'
 
@@ -8,11 +9,16 @@ export default function StoreDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { store, dishes, loading, deleteDish, updateDish } = useStore(id)
-  const { deleteStore } = useStores()
+  const { deleteStore, updateStore } = useStores()
+  const { tags } = useTags()
   const [editingDish, setEditingDish] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [storeStars, setStoreStars] = useState(0)
   const [sort, setSort] = useState('none')
+
+  useEffect(() => {
+    if (store?.storeStars) setStoreStars(store.storeStars)
+  }, [store?.id])
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#9a9a94' }}>載入中...</div>
   if (!store) return <div style={{ padding: 40, textAlign: 'center' }}>找不到店家</div>
@@ -20,6 +26,10 @@ export default function StoreDetailPage() {
   const handleDeleteStore = async () => { await deleteStore(id); navigate('/') }
   const handleDeleteDish = async (dishId) => { if (!window.confirm('確定刪除？')) return; await deleteDish(dishId) }
   const handleUpdateDish = async (dish) => { await updateDish(dish.id, dish); setEditingDish(null) }
+  const handleStoreStars = async (v) => {
+    setStoreStars(v)
+    await updateStore(id, { ...store, storeStars: v })
+  }
 
   const sortFn = (a, b) => {
     if (sort === 'desc') return (b.stars ?? -1) - (a.stars ?? -1)
@@ -28,6 +38,7 @@ export default function StoreDetailPage() {
   }
   const singles = dishes.filter(d => d.type === 'single').sort(sortFn)
   const sets = dishes.filter(d => d.type === 'set').sort(sortFn)
+  const storeTags = (store.tags || []).map(tid => tags.find(t => t.id === tid)).filter(Boolean)
 
   return (
     <div>
@@ -51,23 +62,24 @@ export default function StoreDetailPage() {
       {store.photoUrl && <div style={{ height:180,overflow:'hidden' }}><img src={store.photoUrl} alt="" style={{ width:'100%',height:'100%',objectFit:'cover' }}/></div>}
 
       <div style={{ padding:'14px 16px',background:'#fff',borderBottom:'0.5px solid rgba(0,0,0,0.08)' }}>
-        <div style={{ display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:6 }}>
+        <div style={{ display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:8 }}>
+          {store.area && <span style={{ fontSize:12,padding:'3px 10px',borderRadius:10,background:'#E8F4FF',color:'#185FA5',fontWeight:500 }}>📍 {store.area}</span>}
           <PriceTag price={store.priceRange}/>
-          {store.area && <span style={{ fontSize:11,padding:'2px 8px',borderRadius:8,background:'#E8F4FF',color:'#185FA5' }}>📍 {store.area}</span>}
-          {(store.tags||[]).map(tid => {
-            // 顯示標籤名稱（這裡直接用id，實際應對照tags資料）
-            return null
-          })}
+          {storeTags.map(t => (
+            <span key={t.id} style={{ fontSize:12,padding:'3px 10px',borderRadius:10,background:'#FAECE7',color:'#712B13' }}>
+              {t.emoji ? `${t.emoji} ` : ''}{t.name}
+            </span>
+          ))}
           {store.mapsUrl && <a href={store.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize:12,color:'#185FA5' }}>🗺️ Google Maps</a>}
         </div>
-        {store.address && <div style={{ fontSize:13,color:'#5a5a56',marginBottom:6 }}>📍 {store.address}</div>}
-        {store.note && <div style={{ fontSize:13,color:'#5a5a56',marginBottom:8 }}>{store.note}</div>}
+        {store.address && <div style={{ fontSize:13,color:'#5a5a56',marginBottom:6 }}>{store.address}</div>}
+        {store.note && <div style={{ fontSize:13,color:'#5a5a56',marginBottom:10 }}>{store.note}</div>}
 
         <div style={{ padding:'12px',background:'#f5f4f0',borderRadius:10 }}>
-          <div style={{ fontSize:13,color:'#5a5a56',marginBottom:8 }}>店家整體評分</div>
+          <div style={{ fontSize:12,color:'#5a5a56',marginBottom:8 }}>店家整體評分</div>
           <div style={{ display:'flex',alignItems:'center',gap:12 }}>
-            <StarRating value={storeStars} onChange={setStoreStars} size={28}/>
-            {storeStars > 0 && <span style={{ fontSize:13,color:'#EF9F27',fontWeight:500 }}>{storeStars} 星</span>}
+            <StarRating value={storeStars} onChange={handleStoreStars} size={30}/>
+            {storeStars > 0 && <span style={{ fontSize:14,color:'#EF9F27',fontWeight:500 }}>{storeStars} 星</span>}
           </div>
         </div>
       </div>
@@ -105,9 +117,12 @@ export default function StoreDetailPage() {
                   </div>
                 </div>
                 {(set.items||[]).map((item,i) => (
-                  <div key={i} style={{ display:'flex',alignItems:'center',gap:8,padding:'8px 13px',marginBottom:4,marginLeft:12,background:'#fff',border:'0.5px solid rgba(0,0,0,0.08)',borderLeft:'2px solid #EF9F27',borderRadius:'0 8px 8px 0' }}>
-                    <span style={{ flex:1,fontSize:13 }}>{item.name}</span>
-                    {item.spicyLevel ? <span style={{ fontSize:11,padding:'1px 6px',borderRadius:8,background:'#FCEBEB',color:'#A32D2D' }}>🌶 {item.spicyLevel}</span> : item.spicy ? <SpicyBadge/> : null}
+                  <div key={i} style={{ display:'flex',alignItems:'center',gap:6,padding:'8px 13px',marginBottom:4,marginLeft:12,background:'#fff',border:'0.5px solid rgba(0,0,0,0.08)',borderLeft:'2px solid #EF9F27',borderRadius:'0 8px 8px 0' }}>
+                    <span style={{ fontSize:13,fontWeight:500 }}>{item.name}</span>
+                    {item.spicyLevel
+                      ? <span style={{ fontSize:11,padding:'1px 6px',borderRadius:8,background:'#FCEBEB',color:'#A32D2D' }}>🌶 {item.spicyLevel}</span>
+                      : item.spicy ? <SpicyBadge/> : null}
+                    <span style={{ flex:1 }}/>
                     {item.stars > 0 && <span style={{ color:'#EF9F27',fontSize:13 }}>{'★'.repeat(item.stars)}</span>}
                   </div>
                 ))}
@@ -121,14 +136,18 @@ export default function StoreDetailPage() {
 
 function DishRow({ dish, onEdit, onDelete }) {
   return (
-    <div style={{ display:'flex',alignItems:'center',gap:8,padding:'10px 13px',background:'#fff',border:'0.5px solid rgba(0,0,0,0.08)',borderRadius:10,marginBottom:6 }}>
+    <div style={{ display:'flex',alignItems:'center',gap:6,padding:'10px 13px',background:'#fff',border:'0.5px solid rgba(0,0,0,0.08)',borderRadius:10,marginBottom:6 }}>
       <div style={{ flex:1 }}>
-        <div style={{ fontSize:14,fontWeight:500 }}>{dish.name}</div>
+        <div style={{ display:'flex',alignItems:'center',gap:6,flexWrap:'wrap' }}>
+          <span style={{ fontSize:14,fontWeight:500 }}>{dish.name}</span>
+          {dish.spicyLevel
+            ? <span style={{ fontSize:11,padding:'1px 6px',borderRadius:8,background:'#FCEBEB',color:'#A32D2D' }}>🌶 {dish.spicyLevel}</span>
+            : dish.spicy ? <SpicyBadge/> : null}
+        </div>
         {dish.note && <div style={{ fontSize:11,color:'#9a9a94',marginTop:2 }}>{dish.note}</div>}
       </div>
-      {dish.spicyLevel ? <span style={{ fontSize:11,padding:'1px 6px',borderRadius:8,background:'#FCEBEB',color:'#A32D2D' }}>🌶 {dish.spicyLevel}</span> : dish.spicy ? <SpicyBadge/> : null}
-      {dish.stars > 0 && <span style={{ color:'#EF9F27',fontSize:16 }}>{'★'.repeat(dish.stars)}</span>}
-      <div style={{ fontSize:13,color:'#5a5a56',minWidth:36,textAlign:'right' }}>{dish.price ? `$${dish.price}` : '—'}</div>
+      {dish.stars > 0 && <span style={{ color:'#EF9F27',fontSize:15 }}>{'★'.repeat(dish.stars)}</span>}
+      <div style={{ fontSize:13,color:'#5a5a56',minWidth:32,textAlign:'right' }}>{dish.price ? `$${dish.price}` : '—'}</div>
       <button onClick={onEdit} style={{ background:'none',border:'none',fontSize:12,color:'#5a5a56',cursor:'pointer' }}>編輯</button>
       <button onClick={onDelete} style={{ background:'none',border:'none',fontSize:12,color:'#A32D2D',cursor:'pointer' }}>刪除</button>
     </div>
@@ -146,11 +165,14 @@ function EditSingleCard({ dish, onChange, onSave, onCancel }) {
         <StarRating value={dish.stars||0} onChange={v => onChange({...dish,stars:v})} size={24}/>
       </div>
       {dish.spicy && (
-        <div style={{ display:'flex',gap:4,marginBottom:10,flexWrap:'wrap' }}>
-          {SPICY_LEVELS.map(lv => (
-            <button key={lv} onClick={() => onChange({...dish,spicyLevel:dish.spicyLevel===lv?null:lv})}
-              style={{ padding:'3px 10px',borderRadius:12,fontSize:12,border:'0.5px solid #F09595',cursor:'pointer',background:dish.spicyLevel===lv?'#E24B4A':'#fff',color:dish.spicyLevel===lv?'#fff':'#A32D2D' }}>{lv}</button>
-          ))}
+        <div style={{ marginBottom:10 }}>
+          <div style={{ fontSize:12,color:'#791F1F',marginBottom:4 }}>🌶 辣度</div>
+          <div style={{ display:'flex',gap:4 }}>
+            {SPICY_LEVELS.map(lv => (
+              <button key={lv} onClick={() => onChange({...dish,spicyLevel:dish.spicyLevel===lv?null:lv})}
+                style={{ padding:'4px 12px',borderRadius:12,fontSize:12,border:'0.5px solid #F09595',cursor:'pointer',background:dish.spicyLevel===lv?'#E24B4A':'#fff',color:dish.spicyLevel===lv?'#fff':'#A32D2D' }}>{lv}</button>
+            ))}
+          </div>
         </div>
       )}
       <div style={{ display:'flex',gap:6 }}>
@@ -165,7 +187,6 @@ function EditSetCard({ dish, onChange, onSave, onCancel }) {
   const updateItem = (i,k,v) => { const items=[...(dish.items||[])]; items[i]={...items[i],[k]:v}; onChange({...dish,items}) }
   const addItem = () => onChange({...dish,items:[...(dish.items||[]),{name:'',spicy:false,stars:0,spicyLevel:null}]})
   const removeItem = (i) => onChange({...dish,items:(dish.items||[]).filter((_,idx)=>idx!==i)})
-
   return (
     <div style={{ padding:14,background:'#f5f4f0',borderRadius:10,marginBottom:10,border:'1px solid #EF9F27' }}>
       <div style={{ fontSize:13,fontWeight:500,color:'#633806',marginBottom:8 }}>編輯套餐</div>
