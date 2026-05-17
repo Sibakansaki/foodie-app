@@ -48,7 +48,8 @@ export default function StoreFormPage() {
     setSaving(true)
     try {
       let photoUrl = editStore?.photoUrl || null
-      if (photo) {
+      if (photo === 'DELETE') { photoUrl = null }
+      else if (photo) {
         const b64 = await fileToBase64(photo)
         const res = await api.uploadPhoto(editStore?.id || genId(), b64, photo.name)
         photoUrl = res.url
