@@ -28,7 +28,7 @@ export function Field({ label, children, hint }) {
 
 export function Card({ children, style, onClick }) {
   return (
-    <div onClick={onClick} style={{ background:'var(--surface)',border:'0.5px solid var(--cream-border)',borderRadius:var(--radius-lg),overflow:'hidden',...style }}>
+    <div onClick={onClick} style={{ background:'var(--surface)',border:'0.5px solid var(--cream-border)',borderRadius:'12px',overflow:'hidden',...style }}>
       {children}
     </div>
   )
