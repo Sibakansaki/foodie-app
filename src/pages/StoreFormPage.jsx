@@ -97,7 +97,12 @@ export default function StoreFormPage() {
 
         <Field label="店家照片">
           <label style={{ display: 'block', cursor: 'pointer' }}>
-            {photoPreview ? <img src={photoPreview} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8 }}/> : (
+            {photoPreview ? (
+              <div style={{ position:'relative' }}>
+                <img src={photoPreview} alt="" style={{ width:'100%',height:160,objectFit:'cover',borderRadius:8 }}/>
+                <button onClick={e=>{e.preventDefault();setPhotoPreview(null);setPhoto('DELETE')}} style={{ position:'absolute',top:8,right:8,background:'rgba(0,0,0,0.6)',border:'none',borderRadius:'50%',width:28,height:28,color:'#fff',fontSize:18,cursor:'pointer',lineHeight:1 }}>×</button>
+              </div>
+            ) : (
               <div style={{ border: '1px dashed rgba(0,0,0,0.2)', borderRadius: 8, height: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#9a9a94', fontSize: 13 }}>
                 <span style={{ fontSize: 28 }}>📷</span>點擊上傳照片
               </div>
