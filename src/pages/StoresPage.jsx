@@ -20,6 +20,7 @@ export default function StoresPage() {
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState(null)
   const [activeArea, setActiveArea] = useState('')
+  const [sort, setSort] = useState('none')
 
   const areas = [...new Set(stores.map(s => s.area).filter(Boolean))]
   const filtered = stores.filter(s => {
@@ -27,6 +28,12 @@ export default function StoresPage() {
     const matchTag = !activeTag || (s.tags||[]).includes(activeTag)
     const matchArea = !activeArea || s.area === activeArea
     return matchSearch && matchTag && matchArea
+  }).sort((a, b) => {
+    const av = a.storeStars || a.avgRating || 0
+    const bv = b.storeStars || b.avgRating || 0
+    if (sort === 'desc') return bv - av
+    if (sort === 'asc') return av - bv
+    return 0
   })
 
   return (
@@ -48,6 +55,7 @@ export default function StoresPage() {
 
         <div style={{ display:'flex',gap:8,marginBottom:10 }}>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜尋店家..." style={{ flex:1 }}/>
+          <button onClick={()=>setSort(s=>s==='desc'?'asc':s==='asc'?'none':'desc')} style={{ flexShrink:0,padding:'0 10px',background:'var(--gold-light)',border:'0.5px solid var(--gold)',borderRadius:6,color:'var(--gold-dark)',fontSize:12,cursor:'pointer',whiteSpace:'nowrap' }}>{sort==='desc'?'⭐ 高→低':sort==='asc'?'⭐ 低→高':'排序'}</button>
           <button onClick={()=>navigate('/stores/new')} style={{ flexShrink:0,background:'var(--red)',border:'none',borderRadius:6,color:'#fff',fontSize:13,fontWeight:500,padding:'0 14px',cursor:'pointer',letterSpacing:'0.05em' }}>＋ 新增</button>
         </div>
 
