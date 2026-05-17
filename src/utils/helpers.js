@@ -16,11 +16,34 @@ export function formatPrice(p) {
 
 export const SPICY_LEVELS = ['小辣', '中辣', '大辣']
 
-export function fileToBase64(file) {
+// 壓縮圖片到最大 800px 寬，品質 80%，回傳 base64
+export function compressAndConvertToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(reader.result.split(',')[1])
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const MAX = 800
+        let w = img.width
+        let h = img.height
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX }
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+        resolve(dataUrl.split(',')[1])
+      }
+      img.onerror = reject
+      img.src = e.target.result
+    }
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+export function fileToBase64(file) {
+  return compressAndConvertToBase64(file)
 }
