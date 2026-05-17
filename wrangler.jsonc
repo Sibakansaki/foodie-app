@@ -1,5 +1,11 @@
 {
-  "name": "foodie-worker",
-  "compatibility_date": "2026-05-16",
-  "main": "worker/index.js"
+	"name": "foodie-worker",
+	"compatibility_date": "2026-05-16",
+	"main": "worker/index.js",
+	"r2_buckets": [
+		{
+			"binding": "PHOTOS",
+			"bucket_name": "foodie-photos"
+		}
+	]
 }
